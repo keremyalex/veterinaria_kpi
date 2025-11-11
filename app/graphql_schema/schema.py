@@ -52,7 +52,7 @@ class Query:
                 # KPIs
                 dashboardResumen: DashboardResumen!
                 citasPorMes(anio: Int): [CitasPorMes!]!
-                mascotasPorEspecie: [MascotasPorEspecie!]!
+                estadisticasMascotasPorEspecie: [MascotasPorEspecie!]!
                 doctorPerformance(mes: Int, anio: Int): [DoctorPerformance!]!
                 vacunacionEstadisticas: VacunacionEstadisticas!
                 alertasVacunacion(diasLimite: Int = 30): [AlertaVacunacion!]!
@@ -234,8 +234,8 @@ class Query:
             return await kpi_service.get_citas_por_mes(anio)
 
     @strawberry.field
-    async def mascotasPorEspecie(self) -> List[MascotasPorEspecie]:
-        """Obtiene distribución de mascotas por especie"""
+    async def estadisticasMascotasPorEspecie(self) -> List[MascotasPorEspecie]:
+        """Obtiene estadísticas de mascotas agrupadas por especie"""
         async for kpi_service in get_kpi_service():
             return await kpi_service.get_mascotas_por_especie()
 
