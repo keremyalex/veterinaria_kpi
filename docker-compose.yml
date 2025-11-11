@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  kpi-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: veterinaria-kpi-service
+    ports:
+      - "${PORT:-9090}:9090"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - HOST=0.0.0.0
+      - PORT=9090
+      - DEBUG=${DEBUG:-true}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001,http://localhost:4000}
+    networks:
+      - veterinaria-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:9090/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  veterinaria-network:
+    driver: bridge

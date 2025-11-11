@@ -1,0 +1,39 @@
+version: '3.8'
+
+# Docker Compose para desarrollo
+# Solo ejecuta el servicio KPI conectándose a tu BD externa
+
+services:
+  kpi-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: veterinaria-kpi-service
+    ports:
+      - "${PORT:-9090}:9090"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - HOST=0.0.0.0
+      - PORT=9090
+      - DEBUG=${DEBUG:-true}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001,http://localhost:4000}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:9090/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # Opcional: si tu BD está en Docker también, agrega la red
+    # networks:
+    #   - tu-red-existente
+
+# Si tu base de datos está en otra red Docker, descomenta y ajusta:
+# networks:
+#   tu-red-existente:
+#     external: true
