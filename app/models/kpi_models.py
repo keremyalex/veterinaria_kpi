@@ -38,38 +38,39 @@ class CitasPorMes:
     """KPI de citas agrupadas por mes"""
     mes: str
     anio: int
-    total_citas: int
-    citas_completadas: int
-    citas_canceladas: int
-    tasa_completitud: float
+    total_citas: int = strawberry.field(name="totalCitas")
+    citas_completadas: int = strawberry.field(name="citasCompletadas")
+    citas_canceladas: int = strawberry.field(name="citasCanceladas")
+    tasa_completitud: float = strawberry.field(name="tasaCompletitud")
 
 
 @strawberry.type
 class MascotasPorEspecie:
     """KPI de mascotas agrupadas por especie"""
     especie: str
-    total_mascotas: int
+    total_mascotas: int = strawberry.field(name="totalMascotas")
+    porcentaje: float
     porcentaje: float
 
 
 @strawberry.type
 class DoctorPerformance:
     """KPI de rendimiento por doctor"""
-    doctor_id: int
-    doctor_nombre: str
-    total_citas: int
-    citas_completadas: int
-    tasa_completitud: float
-    promedio_diagnosticos_por_cita: float
+    doctor_id: int = strawberry.field(name="doctorId")
+    doctor_nombre: str = strawberry.field(name="doctorNombre")
+    total_citas: int = strawberry.field(name="totalCitas")
+    citas_completadas: int = strawberry.field(name="citasCompletadas")
+    tasa_completitud: float = strawberry.field(name="tasaCompletitud")
+    promedio_diagnosticos_por_cita: float = strawberry.field(name="promedioDiagnosticosPorCita")
 
 
 @strawberry.type
 class VacunacionEstadisticas:
     """Estadísticas de vacunación"""
-    total_vacunaciones: int
-    vacunaciones_vencidas: int
-    vacunaciones_proximas: int
-    vacunas_mas_aplicadas: List[str]
+    total_vacunaciones: int = strawberry.field(name="totalVacunaciones")
+    vacunaciones_vencidas: int = strawberry.field(name="vacunacionesVencidas")
+    vacunaciones_proximas: int = strawberry.field(name="vacunacionesProximas")
+    vacunas_mas_aplicadas: List[str] = strawberry.field(name="vacunasMasAplicadas")
 
 
 @strawberry.type
@@ -105,27 +106,25 @@ class TendenciasMensuales:
 @strawberry.type
 class AlertaVacunacion:
     """Alerta de vacunación próxima o vencida"""
-    mascota_id: int
-    mascota_nombre: str
-    cliente_nombre: str
-    cliente_telefono: str
-    vacuna: str
-    fecha_vencimiento: date
-    dias_vencida: int
-    urgencia: str
+    mascota_id: int = strawberry.field(name="mascotaId")
+    mascota_nombre: str = strawberry.field(name="mascotaNombre")
+    cliente_nombre: str = strawberry.field(name="clienteNombre")
+    tipo_vacuna: str = strawberry.field(name="tipoVacuna")
+    fecha_ultima: Optional[str] = strawberry.field(name="fechaUltima", default=None)
+    fecha_proxima: str = strawberry.field(name="fechaProxima")
+    dias_vencimiento: int = strawberry.field(name="diasVencimiento")
+    prioridad: str
 
 
 @strawberry.type
 class DashboardResumen:
     """Resumen principal para el dashboard"""
-    total_mascotas: int
-    total_clientes: int
-    total_doctores: int
-    citas_hoy: int
-    citas_semana: int
-    vacunaciones_vencidas: int
-    nuevos_clientes_mes: int
-    tasa_ocupacion: float
+    total_mascotas: int = strawberry.field(name="totalMascotas")
+    total_clientes: int = strawberry.field(name="totalClientes") 
+    total_citas: int = strawberry.field(name="totalCitas")
+    citas_hoy: int = strawberry.field(name="citasHoy")
+    ingresos_mes: float = strawberry.field(name="ingresosMes")
+    crecimiento_mensual: Optional[float] = strawberry.field(name="crecimientoMensual", default=None)
 
 
 @strawberry.type

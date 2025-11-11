@@ -13,15 +13,15 @@ from app.models.report_models import (
     ReporteFinanciero, ReporteClinico, ReporteOperacional,
     ReporteInventario, ReporteCompleto, TipoReporte, FormatoReporte
 )
-from app.services.kpi_service import KPIService
+from app.services.kpi_service_real import KPIServiceReal
 from app.services.report_service import ReportService
 from app.config.database import get_database
 
 
 async def get_kpi_service():
-    """Dependency para obtener el servicio de KPIs"""
+    """Dependency para obtener el servicio de KPIs REAL"""
     async for db in get_database():
-        yield KPIService(db)
+        yield KPIServiceReal(db)
 
 
 async def get_report_service():
@@ -173,6 +173,32 @@ class Query:
                 rotacionInventario: Float!
                 costoInventario: Float!
                 perdidasVencimiento: Float!
+            }
+
+            type ReporteCompleto {
+                metadata: MetadataReporte!
+                resumen: ResumenReporte!
+                reporteFinanciero: ReporteFinanciero
+                reporteClinico: ReporteClinico
+                reporteOperacional: ReporteOperacional
+                reporteInventario: ReporteInventario
+            }
+
+            type MetadataReporte {
+                idReporte: String!
+                fechaGeneracion: String!
+                usuarioSolicitante: String!
+                tiempoProcesamiento: Float!
+                totalRegistros: Int!
+                filtrosAplicados: String!
+            }
+
+            type ResumenReporte {
+                puntosClave: [String!]!
+                tendenciasPrincipales: [String!]!
+                alertas: [String!]!
+                recomendaciones: [String!]!
+                metricasDestacadas: [String!]!
             }
 
             enum TipoReporte {
