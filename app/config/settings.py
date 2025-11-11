@@ -54,6 +54,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
+        extra = "ignore"  # Ignora variables de entorno extra no definidas
 
     def get_database_url(self) -> str:
         """Construye la URL de la base de datos"""
