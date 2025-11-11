@@ -1,14 +1,20 @@
 """
 Schema GraphQL para KPIs de veterinaria - Compatible con Apollo Federation
+Incluye funcionalidades de KPIs y Reportes
 """
 import strawberry
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, date
 from app.models.kpi_models import (
     CitasPorMes, MascotasPorEspecie, DoctorPerformance,
     VacunacionEstadisticas, DashboardResumen, AlertaVacunacion
 )
+from app.models.report_models import (
+    ReporteFinanciero, ReporteClinico, ReporteOperacional,
+    ReporteInventario, ReporteCompleto, TipoReporte, FormatoReporte
+)
 from app.services.kpi_service import KPIService
+from app.services.report_service import ReportService
 from app.config.database import get_database
 
 
@@ -16,6 +22,12 @@ async def get_kpi_service():
     """Dependency para obtener el servicio de KPIs"""
     async for db in get_database():
         yield KPIService(db)
+
+
+async def get_report_service():
+    """Dependency para obtener el servicio de reportes"""
+    async for db in get_database():
+        yield ReportService(db)
 
 
 # Tipo _Service requerido por Apollo Federation
@@ -27,7 +39,7 @@ class _Service:
 @strawberry.type
 class Query:
     """
-    Consultas GraphQL para KPIs de la veterinaria
+    Consultas GraphQL para KPIs y Reportes de la veterinaria
     Compatible con Apollo Federation
     """
 
@@ -37,6 +49,7 @@ class Query:
         """Campo _service requerido por Apollo Federation para composición del schema"""
         sdl = '''
             type Query {
+                # KPIs
                 dashboardResumen: DashboardResumen!
                 citasPorMes(anio: Int): [CitasPorMes!]!
                 mascotasPorEspecie: [MascotasPorEspecie!]!
@@ -44,8 +57,17 @@ class Query:
                 vacunacionEstadisticas: VacunacionEstadisticas!
                 alertasVacunacion(diasLimite: Int = 30): [AlertaVacunacion!]!
                 health: String!
+                
+                # Reportes
+                generarReporteFinanciero(fechaInicio: Date!, fechaFin: Date!, doctorId: Int): ReporteFinanciero!
+                generarReporteClinico(fechaInicio: Date!, fechaFin: Date!, doctorId: Int, especie: String): ReporteClinico!
+                generarReporteOperacional(fechaInicio: Date!, fechaFin: Date!): ReporteOperacional!
+                generarReporteInventario(fechaInicio: Date!, fechaFin: Date!): ReporteInventario!
+                generarReporteCompleto(fechaInicio: Date!, fechaFin: Date!, tipoReporte: TipoReporte!, incluirGraficos: Boolean = true, formato: FormatoReporte = PDF, doctorId: Int, especie: String): ReporteCompleto!
+                obtenerTiposReporte: [String!]!
             }
 
+            # Tipos KPI
             type DashboardResumen {
                 totalMascotas: Int!
                 totalCitas: Int!
@@ -96,9 +118,83 @@ class Query:
                 diasVencimiento: Int!
                 prioridad: String!
             }
+
+            # Tipos Reportes
+            type ReporteFinanciero {
+                periodo: String!
+                fechaInicio: Date!
+                fechaFin: Date!
+                ingresosConsultas: Float!
+                ingresosVacunas: Float!
+                ingresosMedicamentos: Float!
+                ingresosCirugia: Float!
+                totalIngresos: Float!
+                costosOperativos: Float!
+                gananciaNeta: Float!
+                margenGanancia: Float!
+                comparacionPeriodoAnterior: Float!
+            }
+
+            type ReporteClinico {
+                periodo: String!
+                fechaInicio: Date!
+                fechaFin: Date!
+                totalConsultas: Int!
+                consultasPorTipo: [String!]!
+                diagnosticosFrecuentes: [String!]!
+                tratamientosAplicados: [String!]!
+                cirugiasRealizadas: Int!
+                vacunasAplicadas: Int!
+                tiempoPromedioConsulta: Float!
+                tasaSeguimiento: Float!
+            }
+
+            type ReporteOperacional {
+                periodo: String!
+                fechaInicio: Date!
+                fechaFin: Date!
+                ocupacionConsultorios: Float!
+                utilizacionEquipos: Float!
+                tiempoEsperaPromedio: Float!
+                cancelaciones: Int!
+                tasaCancelacion: Float!
+                reprogramaciones: Int!
+                satisfaccionCliente: Float
+                eficienciaPersonal: Float!
+            }
+
+            type ReporteInventario {
+                periodo: String!
+                fechaInicio: Date!
+                fechaFin: Date!
+                medicamentosUtilizados: [String!]!
+                stockBajo: [String!]!
+                productosVencidos: [String!]!
+                rotacionInventario: Float!
+                costoInventario: Float!
+                perdidasVencimiento: Float!
+            }
+
+            enum TipoReporte {
+                FINANCIERO
+                CLINICO
+                OPERACIONAL
+                MARKETING
+                INVENTARIO
+            }
+
+            enum FormatoReporte {
+                PDF
+                EXCEL
+                CSV
+                JSON
+            }
+
+            scalar Date
         '''
         return _Service(sdl=sdl.strip())
 
+    # === KPI QUERIES ===
     @strawberry.field
     async def dashboardResumen(self) -> DashboardResumen:
         """Obtiene el resumen principal del dashboard"""
@@ -142,7 +238,125 @@ class Query:
     @strawberry.field
     async def health(self) -> str:
         """Health check del servicio KPI"""
-        return "KPI Subgraph is running! 🚀"
+        return "KPI & Reports Subgraph is running! 🚀📊"
+
+    # === REPORT QUERIES ===
+    @strawberry.field
+    async def generarReporteFinanciero(
+        self,
+        fechaInicio: date,
+        fechaFin: date,
+        doctorId: Optional[int] = None
+    ) -> ReporteFinanciero:
+        """Genera reporte financiero para el período especificado"""
+        from app.models.report_models import FiltrosReporte
+        
+        filtros = FiltrosReporte(
+            fecha_inicio=fechaInicio,
+            fecha_fin=fechaFin,
+            tipo_reporte=TipoReporte.FINANCIERO,
+            doctor_id=doctorId
+        )
+        
+        async for report_service in get_report_service():
+            return await report_service.generar_reporte_financiero(filtros)
+
+    @strawberry.field
+    async def generarReporteClinico(
+        self,
+        fechaInicio: date,
+        fechaFin: date,
+        doctorId: Optional[int] = None,
+        especie: Optional[str] = None
+    ) -> ReporteClinico:
+        """Genera reporte clínico para el período especificado"""
+        from app.models.report_models import FiltrosReporte
+        
+        filtros = FiltrosReporte(
+            fecha_inicio=fechaInicio,
+            fecha_fin=fechaFin,
+            tipo_reporte=TipoReporte.CLINICO,
+            doctor_id=doctorId,
+            especie=especie
+        )
+        
+        async for report_service in get_report_service():
+            return await report_service.generar_reporte_clinico(filtros)
+
+    @strawberry.field
+    async def generarReporteOperacional(
+        self,
+        fechaInicio: date,
+        fechaFin: date
+    ) -> ReporteOperacional:
+        """Genera reporte operacional para el período especificado"""
+        from app.models.report_models import FiltrosReporte
+        
+        filtros = FiltrosReporte(
+            fecha_inicio=fechaInicio,
+            fecha_fin=fechaFin,
+            tipo_reporte=TipoReporte.OPERACIONAL
+        )
+        
+        async for report_service in get_report_service():
+            return await report_service.generar_reporte_operacional(filtros)
+
+    @strawberry.field
+    async def generarReporteInventario(
+        self,
+        fechaInicio: date,
+        fechaFin: date
+    ) -> ReporteInventario:
+        """Genera reporte de inventario para el período especificado"""
+        from app.models.report_models import FiltrosReporte
+        
+        filtros = FiltrosReporte(
+            fecha_inicio=fechaInicio,
+            fecha_fin=fechaFin,
+            tipo_reporte=TipoReporte.INVENTARIO
+        )
+        
+        async for report_service in get_report_service():
+            return await report_service.generar_reporte_inventario(filtros)
+
+    @strawberry.field
+    async def generarReporteCompleto(
+        self,
+        fechaInicio: date,
+        fechaFin: date,
+        tipoReporte: TipoReporte,
+        incluirGraficos: bool = True,
+        formato: FormatoReporte = FormatoReporte.PDF,
+        doctorId: Optional[int] = None,
+        especie: Optional[str] = None
+    ) -> ReporteCompleto:
+        """Genera un reporte completo según los parámetros especificados"""
+        from app.models.report_models import FiltrosReporte, ConfiguracionReporte
+        
+        filtros = FiltrosReporte(
+            fecha_inicio=fechaInicio,
+            fecha_fin=fechaFin,
+            tipo_reporte=tipoReporte,
+            doctor_id=doctorId,
+            especie=especie,
+            incluir_detalles=True
+        )
+        
+        configuracion = ConfiguracionReporte(
+            incluir_graficos=incluirGraficos,
+            formato_exportacion=formato,
+            incluir_comparaciones=True
+        )
+        
+        async for report_service in get_report_service():
+            return await report_service.generar_reporte_completo(filtros, configuracion)
+
+    @strawberry.field
+    async def obtenerTiposReporte(self) -> List[str]:
+        """Obtiene los tipos de reportes disponibles"""
+        async for report_service in get_report_service():
+            reportes = await report_service.obtener_reportes_disponibles()
+            return [reporte["nombre"] for reporte in reportes]
 
 
 # Schema principal - Compatible con Apollo Federation

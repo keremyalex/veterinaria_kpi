@@ -1,6 +1,6 @@
-# Subgrafo de KPIs para Sistema de Veterinaria
+# Subgrafo de KPIs y Reportes para Sistema de Veterinaria
 
-Subgrafo desarrollado en Python con FastAPI y GraphQL para proporcionar indicadores clave de rendimiento (KPIs) del sistema de veterinaria. Compatible con Apollo Federation.
+Subgrafo desarrollado en Python con FastAPI y GraphQL para proporcionar indicadores clave de rendimiento (KPIs) y sistema de reportes del sistema de veterinaria. Compatible con Apollo Federation.
 
 ## 🚀 Características
 
@@ -10,6 +10,8 @@ Subgrafo desarrollado en Python con FastAPI y GraphQL para proporcionar indicado
 - **PostgreSQL**: Conexión directa a la base de datos para consultas optimizadas
 - **Docker**: Containerización completa con Docker Compose
 - **KPIs en tiempo real**: Estadísticas actualizadas del negocio veterinario
+- **Sistema de Reportes**: Generación de reportes financieros, clínicos y operacionales
+- **Exportación múltiple**: PDF, Excel, CSV, JSON
 
 ## 📊 KPIs Disponibles
 
@@ -28,7 +30,36 @@ Subgrafo desarrollado en Python con FastAPI y GraphQL para proporcionar indicado
 - **Estadísticas de vacunación**: Vencidas, próximas y más aplicadas
 - **Alertas de vacunación**: Notificaciones por vencimientos
 
-## 🛠️ Tecnologías
+## � Reportes Disponibles
+
+### Reporte Financiero
+- Ingresos por servicio (consultas, vacunas, medicamentos, cirugías)
+- Análisis de costos operativos
+- Cálculo de ganancia neta y margen
+- Comparación con períodos anteriores
+
+### Reporte Clínico
+- Total de consultas por período
+- Distribución por tipo de servicio
+- Diagnósticos más frecuentes
+- Tratamientos aplicados
+- Estadísticas de vacunación
+- Tiempo promedio por consulta
+
+### Reporte Operacional
+- Ocupación de consultorios
+- Utilización de equipos
+- Tiempo de espera promedio
+- Tasas de cancelación y reprogramación
+- Eficiencia del personal
+
+### Reporte de Inventario
+- Medicamentos más utilizados
+- Stock bajo y productos vencidos
+- Rotación de inventario
+- Análisis de costos y pérdidas
+
+## �🛠️ Tecnologías
 
 - **Python 3.11**
 - **FastAPI 0.104+**
@@ -38,17 +69,38 @@ Subgrafo desarrollado en Python con FastAPI y GraphQL para proporcionar indicado
 - **Pydantic 2.0** para validación
 - **Docker & Docker Compose**
 - **Apollo Federation** compatible
+- **ReportLab** para PDFs
+- **OpenPyXL** para Excel
+- **Pandas** para análisis de datos
+- **Matplotlib/Seaborn** para gráficos
 
 ## 📁 Estructura del Proyecto
 
 ```
-kpi-microservice/
+veterinaria_kpi/
 ├── app/
 │   ├── config/
 │   │   ├── __init__.py
 │   │   ├── database.py      # Configuración de BD
 │   │   └── settings.py      # Configuración general
 │   ├── models/
+│   │   ├── __init__.py
+│   │   ├── kpi_models.py    # Modelos de KPIs
+│   │   └── report_models.py # Modelos de Reportes
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── kpi_service.py   # Lógica de KPIs
+│   │   └── report_service.py# Lógica de Reportes
+│   ├── graphql_schema/
+│   │   ├── __init__.py
+│   │   ├── schema.py        # Schema principal
+│   │   └── report_schema.py # Schema de reportes
+│   └── main.py              # Aplicación principal
+├── docker-compose.yml
+├── Dockerfile
+├── requirements.txt
+├── .env.example
+└── README.md
 │   │   ├── __init__.py
 │   │   ├── database_models.py  # Modelos SQLAlchemy
 │   │   └── kpi_models.py       # Tipos GraphQL
@@ -157,6 +209,183 @@ const gateway = new ApolloGateway({
 });
 ```
 
+## 🔍 Ejemplos de Consultas GraphQL
+
+### KPIs Básicos
+
+```graphql
+# Dashboard resumen
+query Dashboard {
+  dashboardResumen {
+    totalMascotas
+    totalClientes
+    citasHoy
+    ingresosMes
+    crecimientoMensual
+  }
+}
+
+# Citas por mes del año actual
+query CitasMensuales {
+  citasPorMes(anio: 2025) {
+    mes
+    anio
+    totalCitas
+    citasCompletadas
+    tasaCompletitud
+  }
+}
+
+# Performance de doctores
+query PerformanceDoctores {
+  doctorPerformance(mes: 11, anio: 2025) {
+    doctorNombre
+    totalCitas
+    tasaCompletitud
+    promedioDiagnosticosPorCita
+  }
+}
+```
+
+### Reportes Financieros
+
+```graphql
+# Reporte financiero mensual
+query ReporteFinanciero {
+  generarReporteFinanciero(
+    fechaInicio: "2025-11-01"
+    fechaFin: "2025-11-30"
+  ) {
+    periodo
+    totalIngresos
+    ingresosConsultas
+    ingresosVacunas
+    ingresosCirugia
+    gananciaNeta
+    margenGanancia
+    comparacionPeriodoAnterior
+  }
+}
+```
+
+### Reportes Clínicos
+
+```graphql
+# Reporte clínico por doctor
+query ReporteClinico {
+  generarReporteClinico(
+    fechaInicio: "2025-11-01"
+    fechaFin: "2025-11-30"
+    doctorId: 1
+  ) {
+    periodo
+    totalConsultas
+    consultasPorTipo
+    diagnosticosFrecuentes
+    vacunasAplicadas
+    tiempoPromedioConsulta
+    tasaSeguimiento
+  }
+}
+```
+
+### Reportes Operacionales
+
+```graphql
+# Análisis operacional
+query ReporteOperacional {
+  generarReporteOperacional(
+    fechaInicio: "2025-11-01"
+    fechaFin: "2025-11-30"
+  ) {
+    ocupacionConsultorios
+    utilizacionEquipos
+    tiempoEsperaPromedio
+    cancelaciones
+    tasaCancelacion
+    eficienciaPersonal
+  }
+}
+```
+
+### Reportes Completos
+
+```graphql
+# Reporte completo con metadatos
+query ReporteCompleto {
+  generarReporteCompleto(
+    fechaInicio: "2025-11-01"
+    fechaFin: "2025-11-30"
+    tipoReporte: FINANCIERO
+    incluirGraficos: true
+    formato: PDF
+  ) {
+    metadata {
+      idReporte
+      fechaGeneracion
+      tiempoProcesamiento
+      totalRegistros
+    }
+    resumen {
+      puntosClave
+      tendenciasPrincipales
+      alertas
+      recomendaciones
+    }
+    reporteFinanciero {
+      totalIngresos
+      gananciaNeta
+      margenGanancia
+    }
+  }
+}
+```
+
+### Comparación entre Períodos
+
+```graphql
+# Comparar dos trimestres
+query ComparacionTrimestres {
+  trimestre1: generarReporteFinanciero(
+    fechaInicio: "2025-07-01"
+    fechaFin: "2025-09-30"
+  ) {
+    totalIngresos
+    gananciaNeta
+  }
+  
+  trimestre2: generarReporteFinanciero(
+    fechaInicio: "2025-10-01"
+    fechaFin: "2025-12-31"
+  ) {
+    totalIngresos
+    gananciaNeta
+  }
+}
+```
+
+## 🌐 API GraphQL (Subgrafo)
+
+### Endpoints
+- **GraphQL**: `http://localhost:9090/graphql`
+- **SDL**: `http://localhost:9090/graphql/sdl` (para Federation)
+- **Health Check**: `http://localhost:9090/health`
+
+### Integración con Gateway
+
+Este subgrafo debe ser registrado en tu Apollo Gateway existente:
+
+```javascript
+const gateway = new ApolloGateway({
+  supergraphSdl: new IntrospectAndCompose({
+    subgraphs: [
+      { name: 'clinic-service', url: 'http://localhost:3001/graphql' },
+      { name: 'kpi-service', url: 'http://localhost:9090/graphql' }
+    ],
+  }),
+});
+```
+
 ### Consultas desde Frontend (via Gateway)
 
 ```graphql
@@ -166,6 +395,21 @@ query DashboardCompleto {
   doctores { id nombre apellido }
   
   # Datos del kpi-service  
+  dashboardResumen {
+    totalMascotas
+    citasHoy
+    ingresosMes
+  }
+  
+  # Reportes combinados
+  generarReporteFinanciero(
+    fechaInicio: "2025-11-01"
+    fechaFin: "2025-11-30"
+  ) {
+    totalIngresos
+    margenGanancia
+  }
+}  
   dashboardResumen {
     totalMascotas
     citasHoy
